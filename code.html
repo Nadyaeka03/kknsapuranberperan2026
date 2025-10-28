@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengumuman Hasil Seleksi Wawancara KKN Sapuran Berperan 2026</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f8e1f4, #e1f5fe, #f1f8e9); /* Gradien pastel: pink, biru, hijau */
+            color: #5d5d5d;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 90%;
+        }
+        h1 {
+            color: #7b68ee; /* Ungu pastel */
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #d1c4e9; /* Border pastel */
+            border-radius: 10px;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+        button {
+            background: linear-gradient(135deg, #ffb3ba, #bae1ff); /* Tombol pastel */
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        #result {
+            margin-top: 30px;
+            font-size: 1.5em;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        .lolos {
+            background: #e3f2fd; /* Biru pastel */
+            color: #1976d2;
+        }
+        .tidak-lolos {
+            background: #ffebee; /* Merah pastel */
+            color: #d32f2f;
+        }
+        .peringatan {
+            background: #fff3e0; /* Kuning pastel */
+            color: #f57c00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pengumuman Hasil Seleksi Wawancara</h1>
+        <h2>KKN Sapuran Berperan Periode II Tahun 2026</h2>
+        <p>Masukkan nama lengkap Anda untuk melihat hasil seleksi:</p>
+        <input type="text" id="namaInput" placeholder="Nama Lengkap">
+        <br>
+        <button onclick="cekHasil()">Cek Hasil</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Daftar nama yang lolos (dari data Anda)
+        const namaLolos = [
+            "Falayesa Sihnya Kinanthia",
+            "Hafizh Izzaturrahman",
+            "Tyto baskoro birowo",
+            "Zahra Rana Fatina",
+            "Muhammad Yusron",
+            "syifa salsabela apriyadi",
+            "Mahatma Hanan Nuha",
+            "Ikhlasul Amal Annaufal",
+            "Ilma Tahara",
+            "Shelamita Amanah Wibowo"
+        ];
+
+        // Fungsi untuk menghitung jarak edit (Levenshtein distance)
+        function levenshteinDistance(a, b) {
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
+        function cekHasil() {
+            const nama = document.getElementById('namaInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (nama === "") {
+                resultDiv.innerHTML = "Silakan masukkan nama lengkap.";
+                resultDiv.className = "";
+                resultDiv.style.display = "block";
+                return;
+            }
+
+            // Cek exact match (case-insensitive)
+            const isLolos = namaLolos.some(n => n.toLowerCase() === nama.toLowerCase());
+            if (isLolos) {
+                resultDiv.innerHTML = `Selamat, ${nama}! Anda LOLOS seleksi wawancara KKN Sapuran Berperan Periode II Tahun 2026.`;
+                resultDiv.className = "lolos";
+                resultDiv.style.display = "block";
+                return;
+            }
+
+            // Cari nama mirip (jarak edit <= 2)
+            let namaMirip = null;
+            for (const n of namaLolos) {
+                if (levenshteinDistance(n.toLowerCase(), nama.toLowerCase()) <= 2) {
+                    namaMirip = n;
+                    break;
+                }
+            }
+
+            if (namaMirip) {
+                resultDiv.innerHTML = `Apakah maksud Anda "${namaMirip}"? Jika ya, klik konfirmasi. Jika tidak, coba masukkan nama lagi.<br>
+                <button onclick="konfirmasiLolos('${namaMirip}')">Ya, Konfirmasi</button>
+                <button onclick="resetInput()">Tidak, Coba Lagi</button>`;
+                resultDiv.className = "peringatan";
+            } else {
+                resultDiv.innerHTML = `Maaf, ${nama}. Anda TIDAK LOLOS seleksi wawancara KKN Sapuran Berperan Periode II Tahun 2026. Tetap Semangat dan Jangan Menyerah!`;
+                resultDiv.className = "tidak-lolos";
+            }
+            resultDiv.style.display = "block";
+        }
+
+        function konfirmasiLolos(namaMirip) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `Selamat, ${namaMirip}! Anda LOLOS seleksi wawancara KKN Sapuran Berperan Periode II Tahun 2026.`;
+            resultDiv.className = "lolos";
+        }
+
+        function resetInput() {
+            document.getElementById('namaInput').value = "";
+            document.getElementById('result').style.display = "none";
+        }
+    </script>
+</body>
+</html>
